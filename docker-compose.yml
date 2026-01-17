@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    container_name: auto_it_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-auto_it_support}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    restart: always
+
+  backend:
+    build: .
+    container_name: auto_it_backend
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-auto_it_support}
+      # host.docker.internal allows container to access host machine (Mac/Windows)
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - OLLAMA_MODEL=llama3
+      - OLLAMA_EMBEDDING_MODEL=nomic-embed-text
+      - LANGCHAIN_TRACING_V2=true
+      - LANGCHAIN_ENDPOINT=https://api.smith.langchain.com
+      - LANGCHAIN_API_KEY=${LANGCHAIN_API_KEY}
+      - LANGCHAIN_PROJECT=auto-it-support
+      # We mount the local data folder so the container sees the ChromaDB created locally, 
+      # OR the container creates it in the volume. 
+      # Since we persist Chroma locally in ./data/chroma_db, mapping /app maps data too.
+      - CHROMA_DB_PATH=./data/chroma_db
+
+  frontend:
+    build: .
+    container_name: auto_it_frontend
+    command: streamlit run dashboard/app.py --server.port 8501 --server.address 0.0.0.0
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+    environment:
+      # Refers to the service name 'backend' internally within Docker network
+      # BUT: Since backend maps 8000:8000 to host, and streamlit runs in browser (client side requests?),
+      # Wait, Streamlit Python runs on server (container). So 'backend:8000' is correct for server-to-server calls.
+      # If the dashboard.py uses requests.get("http://backend:8000"), it works.
+      # If it was a React app, it would need localhost. Streamlit is SSR-ish.
+      - API_URL=http://backend:8000/api/v1

@@ -1,0 +1,1 @@
+IT Security Policy 2025: All passwords must be 16 characters long. use the portal at vpn.example.com.

@@ -1,0 +1,8 @@
+__pycache__
+venv/
+.env
+.git
+.gitignore
+postgres_data/
+*.pyc
+.DS_Store

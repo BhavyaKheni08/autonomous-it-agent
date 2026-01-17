@@ -15,17 +15,17 @@ This system uses a **Multi-Agent** approach orchestrated by **LangGraph**. A Sup
 
 ```mermaid
 graph TD
-    User(User Submission) --> API(FastAPI Endpoint)
-    API --> Triage[🕵️ Triage Agent]
-    Triage --> Research[📚 Research Agent (RAG)]
-    Research --> Draft[✍️ Drafter Agent]
-    Draft --> Quality{⚖️ Quality Gate}
+    User("User Submission") --> API("FastAPI Endpoint")
+    API --> Triage["🕵️ Triage Agent"]
+    Triage --> Research["📚 Research Agent (RAG)"]
+    Research --> Draft["✍️ Drafter Agent"]
+    Draft --> Quality{"⚖️ Quality Gate"}
     
-    Quality -->|Confidence > 0.8| Resolved(✅ Auto-Resolve)
-    Quality -->|Confidence < 0.8| Human(👨‍💻 Human Review)
+    Quality -->|Confidence > 0.8| Resolved("✅ Auto-Resolve")
+    Quality -->|Confidence < 0.8| Human("👨‍💻 Human Review")
     
     subgraph "Human-in-the-Loop"
-    Human --> Dashboard[Streamlit Mission Control]
+    Human --> Dashboard["Streamlit Mission Control"]
     Dashboard --> API
     end
 ```
